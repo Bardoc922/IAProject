@@ -1,7 +1,7 @@
 import socket
 import random
 import ClientBase
-
+from operator import itemgetter
 # IP address and port
 TCP_IP = '127.0.0.1'
 TCP_PORT = 5000
@@ -224,3 +224,172 @@ def infoRoundUndisputedWin(_playerName, _winAmount):
 def infoRoundResult(_playerName, _winAmount):
     print("Player "+ _playerName +" won " + _winAmount + " chips.")
 
+Ranks = {
+    '2': 1,
+    '3': 2,
+    '4': 3,
+    '5': 4,
+    '6': 5,
+    '7': 6,
+    '8': 7,
+    '9': 8,
+    'T': 9,
+    'J': 10,
+    'Q': 11,
+    'K': 12,
+    'A': 13
+}
+
+Suits = {
+    'd': 1,
+    'c': 2,
+    'h': 3,
+    's': 4
+}
+
+Types = {
+    'HighCard':      1,
+    'OnePair':       2,
+    'TwoPairs':      3,
+    '3OfAKind':      4,
+    'Straight':      5,
+    'Flush':         6,
+    'FullHouse':     7,
+    '4OfAKind':      8,
+    'StraightFlush': 9
+}
+
+numberOfTypes = {
+    1:              0,
+    2:              13,
+    3:              26,  #13 + 13
+    4:              182, #26 + 156
+    5:              195, #182 + 13
+    6:              208, #195 + 13
+    7:              209, #208 + 1
+    8:              365, #209 + 156
+    9:              378, #365 + 13
+}
+
+def identify_hand(Hand_):
+
+    # Get the type of Hand
+    def evaluateHand(Hand_):
+        count = 0
+        for card1 in Hand_:
+            for card2 in Hand_:
+                if (card1[0] == card2[0]) and (card1[1] != card2[1]):
+                    count += 1
+        return count
+
+    # Use the "count" to analyse hand
+    count_ = evaluateHand(Hand_)
+
+    sub1 = 0
+    score = [' ', ' ', ' ']
+
+    if count_ == 12:
+        for card1 in Hand_:
+            for card2 in Hand_:
+                if (card1[0] == card2[0]) and (card1[1] != card2[1]):
+                    sub1 += 1
+            if sub1 == 3:
+                score = ['4OfAKind', card1[0], card1[1]]
+                break
+
+    elif count_ == 8:
+        for card1 in Hand_:
+            for card2 in Hand_:
+                if (card1[0] == card2[0]) and (card1[1] != card2[1]):
+                    sub1 += 1
+            if sub1 == 1:
+                sub1 = 0
+            if sub1 == 2:
+                score = ['FullHouse', card1[0], card1[1], card2[0], card2[1]]
+                break
+
+    elif count_ == 6:
+        for card1 in Hand_:
+            for card2 in Hand_:
+                if (card1[0] == card2[0]) and (card1[1] != card2[1]):
+                    sub1 += 1
+            if sub1 == 2:
+                score = ['3OfAKind', card1[0], card1[1]]
+                break
+
+    elif count_ == 4:
+        needCard1 = ['', '']
+        needCard2 = ['', '']
+        for card1 in Hand_:
+            for card2 in Hand_:
+                # card1 keep the first hand card, card1 use every card to compare the card1
+                if card1[0] == card2[0] and card1[1] != card2[1]:
+                    if Suits[card1[1]] > Suits[card2[1]]:
+                        if needCard1 == ['', '']:
+                            needCard1 = card1
+                    else:
+                        if needCard1 == ['', '']:
+                            needCard1 = card2
+                if card1[0] == card2[0] and card1[1] != card2[1] \
+                        and card1[0] != needCard1[0] and card2[0] != needCard1[0]:
+                    if Suits[card1[1]] > Suits[card2[1]]:
+                        if needCard2 == ['', '']:
+                            needCard2 = card1
+                    else:
+                        if needCard2 == ['', '']:
+                            needCard2 = card2
+        if Ranks[needCard1[0]] > Ranks[needCard2[0]]:
+            score = ['TwoPairs', needCard1[0], needCard2[1], needCard2[0], needCard2[1]]
+        else:
+            score = ['TwoPairs', needCard2[0], needCard2[1], needCard1[0], needCard2[1]]
+
+    elif count_ == 2:
+        for card1 in Hand_:
+            for card2 in Hand_:
+                if (card1[0] == card2[0]) and (card1[1] > card2[1]):
+                    sub1 += 1
+            if sub1 == 1:
+                score = ['OnePair', card1[0], card1[1]]
+                break
+
+    elif count_ == 0:
+        def sortHand(Hand_):
+            hand_sorted_ = sorted([[card_, Ranks[card_[0]]] for card_ in Hand_], key=itemgetter(1))[:]
+            return [card_[0] for card_ in hand_sorted_]
+
+        Hand_ = sortHand(Hand_)
+        score = ['HighCard', Hand_[4][0], Hand_[4][1]]
+
+        if Hand_[0][1] == Hand_[1][1] == Hand_[2][1] == Hand_[3][1] == Hand_[4][1]:
+            score = ['Flush', Hand_[4][0], Hand_[4][1]]
+
+        if (Ranks[Hand_[4][0]] - Ranks[Hand_[3][0]] == 1 or 9) \
+                and (Ranks[Hand_[3][0]] - Ranks[Hand_[2][0]] == 1) \
+                and (Ranks[Hand_[2][0]] - Ranks[Hand_[1][0]] == 1) \
+                and (Ranks[Hand_[1][0]] - Ranks[Hand_[0][0]] == 1):
+            
+            score = ['Straight', Hand_[4][0], Hand_[4][1]]
+            if(Ranks[Hand_[4][0]] - Ranks[Hand_[3][0]] == 9):
+                score = ['Straight', Hand_[3][0], Hand_[3][1]]
+            if Hand_[0][1] == Hand_[1][1] == Hand_[2][1] == Hand_[3][1] == Hand_[4][1]:
+                score = ['StraightFlush', Hand_[4][0], Hand_[4][1]]
+                if(Ranks[Hand_[4][0]] - Ranks[Hand_[3][0]] == 9):
+                    score = ['StraightFlush', Hand_[3][0], Hand_[3][1]]
+            
+            
+                
+    else:
+        exit(5664)
+    return score
+
+
+def identify_score(hand):
+    types = Types[hand[0]]
+    card1 = 1
+    card2 = 1
+    if(len(hand)> 3):
+        card2 = Ranks[hand[3]]
+    if(types != 6):
+        card1 = Ranks[hand[1]]
+    score = numberOfTypes[types] + (card1 * card2)
+    return score

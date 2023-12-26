@@ -271,6 +271,11 @@ numberOfTypes = {
     9:              378, #365 + 13
 }
 
+# this function returns a hand type and a card or cards to give more information
+# for example if its a pair then it will return that it's a pair and also one of the cards
+# that compose the pair. And if it's a double pair then it will return one card of each pair
+# always the strongest of the two first, the same goes fo the case it's a full house
+# the return looks like: ['pair', '7', 's']
 def identify_hand(Hand_):
 
     # Get the type of Hand
@@ -382,7 +387,9 @@ def identify_hand(Hand_):
         exit(5664)
     return score
 
-
+# given a hand after being processed by the function identify_hand it returns a score from 1 to 391
+# this score is how strong the given hand is
+# the return looks like: 188 (int)
 def identify_score(hand):
     types = Types[hand[0]]
     card1 = 1

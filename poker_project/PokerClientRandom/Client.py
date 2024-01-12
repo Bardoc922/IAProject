@@ -102,9 +102,9 @@ def queryCallRaiseAction(_maximumBet, _minimumAmountToRaiseTo, _playersCurrentBe
 * @see     #infoCardsInHand(ca.ualberta.cs.poker.Hand)
 '''
 def queryCardsToThrow(_hand):
-    print("Requested information about what cards to throw")
-    print(_hand)
-    return _hand[random.randint(0,4)] + ' '
+    others = getOthers(_hand)
+    others = str(others)
+    return others
 
 # InfoFunction:
 
@@ -400,3 +400,30 @@ def identify_score(hand):
         card1 = Ranks[hand[1]]
     score = numberOfTypes[types] + (card1 * card2)
     return score
+
+# given a hand after being processes by the function identify_hand it returns the cards that are not part
+# of the "points" in the hand
+def getOthers(_hand):    
+    hand = identify_hand(_hand)
+    others = []
+    if hand[0] == 'HighCard':
+        others = [card for card in _hand if card != hand[1]+hand[2]]
+    elif hand[0] == 'OnePair':
+        others = [card for card in _hand if card[0] != hand[1]]
+    elif hand[0] == 'TwoPairs':
+        others = [card for card in _hand if card[0] != hand[1] and card[0] != hand[3]]
+    elif hand[0] == '3OfAKind':
+        others = [card for card in _hand if card[0] != hand[1]]
+    elif hand[0] == 'Straight':
+        others = []
+    elif hand[0] == 'Flush':
+        others = []
+    elif hand[0] == 'FullHouse':
+        others = []
+    elif hand[0] == '4OfAKind':
+        others = [card for card in _hand if card[0] != hand[1]]
+    elif hand[0] == 'StraightFlush':
+        others = []
+
+    
+    return others

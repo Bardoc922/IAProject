@@ -2,6 +2,7 @@ import socket
 import random
 import ClientBase
 from operator import itemgetter
+import math
 # IP address and port
 TCP_IP = '127.0.0.1'
 TCP_PORT = 5000
@@ -43,21 +44,18 @@ def queryPlayerName(_name):
 *                              and the players total amount of chips (the amount of chips alrady put into
 *                              pot plus the remaining amount of chips).
 '''
-def queryOpenAction(_minimumPotAfterOpen, _playersCurrentBet, _playersRemainingChips):
+def queryOpenAction(_minimumPotAfterOpen, _playersCurrentBet, _playersRemainingChips, _CurrentHand):
     print("Player requested to choose an opening action.")
 
-    # Random Open Action
-    def chooseOpenOrCheck():
-        if _playersCurrentBet + _playersRemainingChips > _minimumPotAfterOpen:
-            #return ClientBase.BettingAnswer.ACTION_OPEN,  iOpenBet
-            return ClientBase.BettingAnswer.ACTION_OPEN,  (random.randint(0, 10) + _minimumPotAfterOpen) if _playersCurrentBet + _playersRemainingChips + 10> _minimumPotAfterOpen else _minimumPotAfterOpen
-        else:
-            return ClientBase.BettingAnswer.ACTION_CHECK
-
-    return {
-        0: ClientBase.BettingAnswer.ACTION_CHECK,
-        1: ClientBase.BettingAnswer.ACTION_CHECK,
-    }.get(random.randint(0, 2), chooseOpenOrCheck())
+    hand = identify_hand(_CurrentHand)
+    score = identify_score(hand)
+    money = score_money(score, _playersRemainingChips)
+    
+    if(_playersCurrentBet > money):
+         return ClientBase.BettingAnswer.ACTION_CHECK
+    else:
+        return ClientBase.BettingAnswer.ACTION_OPEN, money
+        
 
 '''
 * Modify queryCallRaiseAction() and add your strategy here
@@ -78,20 +76,20 @@ def queryOpenAction(_minimumPotAfterOpen, _playersCurrentBet, _playersRemainingC
 *                                  puts into the pot and must be between <code>minimumAmountToRaiseTo</code> and
 *                                  <code>playersCurrentBet+playersRemainingChips</code>.
 '''
-def queryCallRaiseAction(_maximumBet, _minimumAmountToRaiseTo, _playersCurrentBet, _playersRemainingChips):
+def queryCallRaiseAction(_maximumBet, _minimumAmountToRaiseTo, _playersCurrentBet, _playersRemainingChips, _CurrentHand):
     print("Player requested to choose a call/raise action.")
-    # Random Open Action
-    def chooseRaiseOrFold():
-        if  _playersCurrentBet + _playersRemainingChips > _minimumAmountToRaiseTo:
-            return ClientBase.BettingAnswer.ACTION_RAISE,  (random.randint(0, 10) + _minimumAmountToRaiseTo) if _playersCurrentBet+ _playersRemainingChips + 10 > _minimumAmountToRaiseTo else _minimumAmountToRaiseTo
-        else:
-            return ClientBase.BettingAnswer.ACTION_FOLD
-    return {
-        0: ClientBase.BettingAnswer.ACTION_FOLD,
-        #1: ClientBase.BettingAnswer.ACTION_ALLIN,
-        1: ClientBase.BettingAnswer.ACTION_FOLD,
-        2: ClientBase.BettingAnswer.ACTION_CALL if _playersCurrentBet + _playersRemainingChips > _maximumBet else ClientBase.BettingAnswer.ACTION_FOLD
-    }.get(random.randint(0, 3), chooseRaiseOrFold())
+    
+    hand = identify_hand(_CurrentHand)
+    score = identify_score(hand)
+    money = score_money(score, _playersRemainingChips)
+    
+    if(_playersCurrentBet < money):
+         return ClientBase.BettingAnswer.ACTION_RAISE, money
+    elif(_playersCurrentBet > money*1.1):
+        return ClientBase.BettingAnswer.ACTION_CALL
+    else:
+        return ClientBase.BettingAnswer.ACTION_FOLD
+    
 
 '''
 * Modify queryCardsToThrow() and add your strategy to throw cards
@@ -427,3 +425,10 @@ def getOthers(_hand):
 
     
     return others
+
+# given the score of the hand and the remaining chips it returns the amount of chips to bet
+def score_money(score, remainigs):
+    retu = math.sqrt(400 * score)
+    if retu > remainigs:
+        retu = remainigs
+    return retu

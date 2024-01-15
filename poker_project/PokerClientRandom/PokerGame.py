@@ -96,7 +96,7 @@ while GAME_ON:
                 minimumPotAfterOpen = int(MsgFractions.pop(0).decode('ascii'))
                 playersCurrentBet = int(MsgFractions.pop(0).decode('ascii'))
                 playerRemainingChips = int(MsgFractions.pop(0).decode('ascii'))
-                tmp = queryOpenAction(minimumPotAfterOpen, playersCurrentBet, playerRemainingChips)
+                tmp = queryOpenAction(minimumPotAfterOpen, playersCurrentBet, playerRemainingChips, infoAgent.CurrentHand)
                 if isinstance(tmp, str):  # For check and All-in
                     s.send((tmp + "\n").encode())
                 elif len(tmp) == 2:  # For open
@@ -109,7 +109,7 @@ while GAME_ON:
                 minimumAmountToRaiseTo = int(MsgFractions.pop(0).decode('ascii'))
                 playersCurrentBet = int(MsgFractions.pop(0).decode('ascii'))
                 playersRemainingChips = int(MsgFractions.pop(0).decode('ascii'))
-                tmp = queryCallRaiseAction(maximumBet, minimumAmountToRaiseTo, playersCurrentBet, playersRemainingChips)
+                tmp = queryCallRaiseAction(maximumBet, minimumAmountToRaiseTo, playersCurrentBet, playersRemainingChips, infoAgent.CurrentHand)
                 if isinstance(tmp, str):  # For fold, all-in, call
                     s.send((tmp + "\n").encode())
                 elif len(tmp) == 2:  # For raise
